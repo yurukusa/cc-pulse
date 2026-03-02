@@ -1,0 +1,25 @@
+{
+  "name": "cc-pulse",
+  "version": "1.0.0",
+  "description": "What's the rhythm of a Claude Code session? Intra-session timing gap distribution — instant bursts, quick cycles, deliberate pauses.",
+  "type": "module",
+  "bin": {
+    "cc-pulse": "./cli.mjs"
+  },
+  "scripts": {
+    "start": "node cli.mjs"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "ai",
+    "developer-tools",
+    "analytics",
+    "performance"
+  ],
+  "author": "yurukusa",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

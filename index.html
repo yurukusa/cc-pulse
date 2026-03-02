@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cc-pulse — What's the rhythm of a Claude Code session?</title>
+<style>
+  :root {
+    --bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#e6edf3;--dim:#8b949e;
+    --green:#3fb950;--yellow:#d29922;--blue:#58a6ff;--purple:#bc8cff;--orange:#ffa657;--accent:#3fb950;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;padding:2rem 1rem;}
+  .container{max-width:780px;margin:0 auto;}
+  h1{font-size:1.5rem;font-weight:700;margin-bottom:.25rem;}
+  h1 span{color:var(--accent);}
+  .subtitle{color:var(--dim);font-size:.9rem;margin-bottom:2rem;}
+  .upload-zone{border:2px dashed var(--border);border-radius:10px;padding:2.5rem;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:2rem;}
+  .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:#0f1e13;}
+  .upload-zone p{color:var(--dim);font-size:.9rem;margin-top:.5rem;}
+  .upload-btn{background:var(--accent);color:#0d1117;border:none;padding:.5rem 1.2rem;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;}
+  .demo-btn{background:transparent;border:1px solid var(--border);color:var(--dim);padding:.4rem 1rem;border-radius:6px;cursor:pointer;font-size:.85rem;margin-top:.75rem;}
+  .demo-btn:hover{border-color:var(--accent);color:var(--text);}
+  #results{display:none;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1rem;}
+  .card-title{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:.75rem;}
+  .big-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1rem;}
+  .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;}
+  .stat-val{font-size:1.6rem;font-weight:800;line-height:1;}
+  .stat-key{font-size:.75rem;color:var(--dim);margin-top:.3rem;}
+  .bar-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem;font-size:.85rem;}
+  .bar-label{width:70px;color:var(--dim);flex-shrink:0;}
+  .bar-track{flex:1;height:10px;background:var(--border);border-radius:5px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:5px;transition:width .6s ease;}
+  .bar-pct{width:42px;text-align:right;font-weight:600;}
+  .bar-count{width:65px;color:var(--dim);font-size:.78rem;}
+  .insight{background:#0f1e13;border:1px solid var(--green);border-radius:8px;padding:1rem 1.25rem;font-size:.9rem;line-height:1.5;margin-bottom:1rem;}
+  .path-hint{background:#1e1a0c;border:1px solid var(--border);border-radius:6px;padding:.6rem 1rem;font-size:.8rem;color:var(--dim);font-family:monospace;margin-bottom:2rem;}
+  @media(max-width:540px){.big-stats{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1><span>cc-pulse</span></h1>
+  <p class="subtitle">What's the rhythm of a Claude Code session?</p>
+  <div class="path-hint">📁 ~/.claude/projects/&lt;project&gt;/*.jsonl — drag files below</div>
+  <div class="upload-zone" id="dz">
+    <button class="upload-btn" onclick="document.getElementById('fi').click()">Upload JSONL files</button>
+    <p>or drag and drop from ~/.claude/projects/</p><br>
+    <button class="demo-btn" onclick="loadDemo()">Try with demo data</button>
+    <input type="file" id="fi" accept=".jsonl" multiple style="display:none" onchange="handleFiles(this.files)">
+  </div>
+  <div id="results">
+    <div class="big-stats">
+      <div class="stat-box"><div class="stat-val" id="vSessions" style="color:var(--blue)">—</div><div class="stat-key">sessions</div></div>
+      <div class="stat-box"><div class="stat-val" id="vGaps" style="color:var(--green)">—</div><div class="stat-key">total gaps</div></div>
+      <div class="stat-box"><div class="stat-val" id="vMedian" style="color:var(--yellow)">—</div><div class="stat-key">median gap</div></div>
+      <div class="stat-box"><div class="stat-val" id="vFast" style="color:var(--green)">—</div><div class="stat-key">% under 15s</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Gap distribution</div>
+      <div class="bar-row"><span class="bar-label">instant</span><div class="bar-track"><div class="bar-fill" id="bInst" style="background:var(--green)"></div></div><span class="bar-pct" id="pInst">—</span><span class="bar-count" id="cInst"></span></div>
+      <div class="bar-row"><span class="bar-label">quick</span><div class="bar-track"><div class="bar-fill" id="bQuick" style="background:var(--blue)"></div></div><span class="bar-pct" id="pQuick">—</span><span class="bar-count" id="cQuick"></span></div>
+      <div class="bar-row"><span class="bar-label">normal</span><div class="bar-track"><div class="bar-fill" id="bNorm" style="background:var(--yellow)"></div></div><span class="bar-pct" id="pNorm">—</span><span class="bar-count" id="cNorm"></span></div>
+      <div class="bar-row"><span class="bar-label">slow</span><div class="bar-track"><div class="bar-fill" id="bSlow" style="background:var(--orange)"></div></div><span class="bar-pct" id="pSlow">—</span><span class="bar-count" id="cSlow"></span></div>
+      <div class="bar-row"><span class="bar-label">paused</span><div class="bar-track"><div class="bar-fill" id="bPause" style="background:var(--purple)"></div></div><span class="bar-pct" id="pPause">—</span><span class="bar-count" id="cPause"></span></div>
+      <p style="font-size:.75rem;color:var(--dim);margin-top:.75rem">instant &lt;2s &nbsp;|&nbsp; quick 2–15s &nbsp;|&nbsp; normal 15–60s &nbsp;|&nbsp; slow 60–300s &nbsp;|&nbsp; paused 300s+</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Session rhythm</div>
+      <div class="bar-row"><span class="bar-label">flow</span><div class="bar-track"><div class="bar-fill" id="bFlow" style="background:var(--green)"></div></div><span class="bar-pct" id="pFlow">—</span><span class="bar-count" id="cFlow"></span></div>
+      <div class="bar-row"><span class="bar-label">mixed</span><div class="bar-track"><div class="bar-fill" id="bMix" style="background:var(--blue)"></div></div><span class="bar-pct" id="pMix">—</span><span class="bar-count" id="cMix"></span></div>
+      <div class="bar-row"><span class="bar-label">cyclic</span><div class="bar-track"><div class="bar-fill" id="bCyc" style="background:var(--purple)"></div></div><span class="bar-pct" id="pCyc">—</span><span class="bar-count" id="cCyc"></span></div>
+      <p style="font-size:.75rem;color:var(--dim);margin-top:.75rem">flow = &gt;50% instant/quick &nbsp;|&nbsp; cyclic = &gt;30% slow/paused</p>
+    </div>
+    <div id="insightBox"></div>
+  </div>
+</div>
+<script>
+const dz=document.getElementById('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFiles(e.dataTransfer.files);});
+function handleFiles(files){
+  Promise.all([...files].map(f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsText(f);})))
+    .then(texts=>analyze(texts.join('\n')));
+}
+function analyze(raw){
+  const sessionMap={};
+  for(const line of raw.split('\n')){
+    if(!line)continue;
+    let d;try{d=JSON.parse(line);}catch{continue;}
+    const sid=d.sessionId||d.session_id||'x';
+    if(!sessionMap[sid])sessionMap[sid]=[];
+    if(d.timestamp){const t=new Date(d.timestamp).getTime();if(!isNaN(t))sessionMap[sid].push(t);}
+  }
+  const sessions=[];
+  for(const ts of Object.values(sessionMap)){
+    if(ts.length<3)continue;
+    ts.sort((a,b)=>a-b);
+    const gaps=[];
+    for(let i=1;i<ts.length;i++){const g=(ts[i]-ts[i-1])/1000;if(g>0&&g<=1800)gaps.push(g);}
+    if(gaps.length<2)continue;
+    const inst=gaps.filter(g=>g<2).length;
+    const quick=gaps.filter(g=>g>=2&&g<15).length;
+    const norm=gaps.filter(g=>g>=15&&g<60).length;
+    const slow=gaps.filter(g=>g>=60&&g<300).length;
+    const pause=gaps.filter(g=>g>=300).length;
+    const sorted=[...gaps].sort((a,b)=>a-b);
+    const med=sorted[Math.floor(sorted.length/2)];
+    const fp=(inst+quick)/gaps.length;
+    const pp=(slow+pause)/gaps.length;
+    const rhythm=fp>=0.5?'flow':pp>=0.3?'cyclic':'mixed';
+    sessions.push({n:gaps.length,inst,quick,norm,slow,pause,med,rhythm});
+  }
+  if(!sessions.length){alert('No valid sessions found.');return;}
+  const n=sessions.length;
+  const tot=sessions.reduce((a,s)=>a+s.n,0);
+  const tI=sessions.reduce((a,s)=>a+s.inst,0);
+  const tQ=sessions.reduce((a,s)=>a+s.quick,0);
+  const tN=sessions.reduce((a,s)=>a+s.norm,0);
+  const tS=sessions.reduce((a,s)=>a+s.slow,0);
+  const tP=sessions.reduce((a,s)=>a+s.pause,0);
+  const meds=sessions.map(s=>s.med).sort((a,b)=>a-b);
+  const med=meds[Math.floor(n/2)];
+  const flow=sessions.filter(s=>s.rhythm==='flow').length;
+  const cyc=sessions.filter(s=>s.rhythm==='cyclic').length;
+  const mix=sessions.filter(s=>s.rhythm==='mixed').length;
+  render({n,tot,tI,tQ,tN,tS,tP,med,flow,cyc,mix});
+}
+function hn(n){return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(0)+'K':Math.round(n).toLocaleString();}
+function fmtS(s){return s>=3600?(s/3600).toFixed(1)+'h':s>=60?Math.round(s/60)+'min':Math.round(s)+'s';}
+function pct(a,t){return t?Math.round(a/t*100):0;}
+function render(d){
+  document.getElementById('results').style.display='block';
+  document.getElementById('vSessions').textContent=hn(d.n);
+  document.getElementById('vGaps').textContent=hn(d.tot);
+  document.getElementById('vMedian').textContent=fmtS(d.med);
+  document.getElementById('vFast').textContent=pct(d.tI+d.tQ,d.tot)+'%';
+  const sb=(bId,pId,cId,n)=>{const p=pct(n,d.tot);document.getElementById(bId).style.width=p+'%';document.getElementById(pId).textContent=p+'%';document.getElementById(cId).textContent='('+hn(n)+')'};
+  sb('bInst','pInst','cInst',d.tI);sb('bQuick','pQuick','cQuick',d.tQ);sb('bNorm','pNorm','cNorm',d.tN);sb('bSlow','pSlow','cSlow',d.tS);sb('bPause','pPause','cPause',d.tP);
+  const sr=(bId,pId,cId,n)=>{const p=pct(n,d.n);document.getElementById(bId).style.width=p+'%';document.getElementById(pId).textContent=p+'%';document.getElementById(cId).textContent='('+n+')'};
+  sr('bFlow','pFlow','cFlow',d.flow);sr('bMix','pMix','cMix',d.mix);sr('bCyc','pCyc','cCyc',d.cyc);
+  document.getElementById('insightBox').innerHTML=`<div class="insight"><strong>${pct(d.tI+d.tQ,d.tot)}% of all events fire within 15s of each other.</strong><br>Median gap: ${fmtS(d.med)}. Claude Code runs in near-continuous bursts.<br>Long pauses (300s+): ${hn(d.tP)} gaps (${(d.tP/d.tot*100).toFixed(1)}%) — user check-ins are rare relative to the total event stream.</div>`;
+}
+function loadDemo(){render({n:521,tot:886877,tI:715580,tQ:153327,tN:12849,tS:4142,tP:979,med:1,flow:521,cyc:0,mix:0});}
+</script>
+</body>
+</html>

@@ -234,6 +234,10 @@ async function main() {
   process.stdout.write(`${C.dim}Median gap: ${fmtSec(overallMedian)}. Claude Code runs in near-continuous bursts.\n`);
   process.stdout.write(`Long pauses (300s+): ${fmt(totPaused)} gaps (${pausedPct}%) — user check-ins are rare\n`);
   process.stdout.write(`relative to the total event stream.${C.reset}\n\n`);
+
+  process.stdout.write(`  ${C.dim}Running Claude Code autonomously? Check your safety score:${C.reset}\n`);
+  process.stdout.write(`  ${C.dim}npx cc-health-check${C.reset}\n`);
+  process.stdout.write(`  ${C.dim}Full production kit: https://yurukusa.gumroad.com/l/pkbbl?utm_source=npm&utm_medium=cli&utm_campaign=ops-kit${C.reset}\n\n`);
 }
 
 main().catch(e => { process.stderr.write(e.message + '\n'); process.exit(1); });

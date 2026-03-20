@@ -45,6 +45,18 @@ Median gap: 1s. Claude Code runs in near-continuous bursts.
 Long pauses (300s+): 979 gaps (0.1%) — user check-ins are rare.
 ```
 
+## Related
+
+- [cc-health-check](https://github.com/yurukusa/cc-health-check) — Is your setup production-ready? (20-point scan)
+- [cc-agent-load](https://github.com/yurukusa/cc-agent-load) — You vs AI time breakdown
+- [cc-toolkit](https://yurukusa.github.io/cc-toolkit/) — 100+ analysis tools
+
+### Want your sessions to run smoother?
+
+**Quick safety setup:** `npx cc-safe-setup` — 7 hooks in 10 seconds (free). [GitHub](https://github.com/yurukusa/cc-safe-setup)
+
+**[Claude Code Ops Kit](https://yurukusa.github.io/cc-ops-kit-landing/?utm_source=github&utm_medium=readme&utm_campaign=cc-pulse)** — 16 production hooks + 6 templates + 3 tools. Fewer pauses, fewer crashes, better flow.
+
 ## License
 
 MIT

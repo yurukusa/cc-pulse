@@ -237,7 +237,7 @@ async function main() {
 
   process.stdout.write(`  ${C.dim}Running Claude Code autonomously? Check your safety score:${C.reset}\n`);
   process.stdout.write(`  ${C.dim}npx cc-health-check${C.reset}\n`);
-  process.stdout.write(`  ${C.dim}Full production kit: https://yurukusa.gumroad.com/l/cc-codex-ops-kit?utm_source=npm&utm_medium=cli&utm_campaign=ops-kit${C.reset}\n\n`);
+  process.stdout.write(`  ${C.dim}Full production kit: https://yurukusa.github.io/cc-ops-kit-landing/?utm_source=npm&utm_medium=cli&utm_campaign=ops-kit${C.reset}\n\n`);
 }
 
 main().catch(e => { process.stderr.write(e.message + '\n'); process.exit(1); });

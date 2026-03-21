@@ -53,7 +53,7 @@ Long pauses (300s+): 979 gaps (0.1%) — user check-ins are rare.
 
 ### Want your sessions to run smoother?
 
-**Quick safety setup:** `npx cc-safe-setup` — 7 hooks in 10 seconds (free). [GitHub](https://github.com/yurukusa/cc-safe-setup)
+**Quick safety setup:** `npx cc-safe-setup` — 8 hooks in 10 seconds (free). [GitHub](https://github.com/yurukusa/cc-safe-setup)
 
 **[Claude Code Ops Kit](https://yurukusa.github.io/cc-ops-kit-landing/?utm_source=github&utm_medium=readme&utm_campaign=cc-pulse)** — 16 production hooks + 5 templates + 3 tools. Fewer pauses, fewer crashes, better flow.
 

@@ -1,7 +1,7 @@
 {
   "name": "@yurukusa/cc-pulse",
   "version": "1.5.4",
-  "description": "What's the rhythm of a Claude Code session? Intra-session timing gap distribution — instant bursts, quick cycles, deliberate pauses.",
+  "description": "What's the rhythm of a Claude Code session? Intra-session timing gap distribution \u2014 instant bursts, quick cycles, deliberate pauses.",
   "type": "module",
   "bin": {
     "cc-pulse": "./cli.mjs"
@@ -21,5 +21,6 @@
   "license": "MIT",
   "engines": {
     "node": ">=18"
-  }
+  },
+  "homepage": "https://github.com/yurukusa/cc-pulse#readme"
 }
